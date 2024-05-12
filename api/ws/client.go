@@ -225,30 +225,33 @@ func (c *ClientWs) WaitForAuthorization() error {
 
 func (c *ClientWs) dial(p bool) error {
 	c.mu[p].Lock()
+	defer c.mu[p].Unlock()
+
 	conn, res, err := websocket.DefaultDialer.Dial(string(c.url[p]), nil)
 	if err != nil {
 		var statusCode int
 		if res != nil {
 			statusCode = res.StatusCode
 		}
-		c.mu[p].Unlock()
 		return fmt.Errorf("error %d: %w", statusCode, err)
 	}
-	defer res.Body.Close()
+	res.Body.Close()
+
 	go func() {
 		err := c.receiver(p)
 		if err != nil {
 			fmt.Printf("receiver error: %v\n", err)
+			c.Cancel()
 		}
 	}()
 	go func() {
 		err := c.sender(p)
 		if err != nil {
 			fmt.Printf("sender error: %v\n", err)
+			c.Cancel()
 		}
 	}()
 	c.conn[p] = conn
-	c.mu[p].Unlock()
 	return nil
 }
 func (c *ClientWs) sender(p bool) error {
