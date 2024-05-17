@@ -47,7 +47,7 @@ type ClientWs struct {
 const (
 	redialTick = 2 * time.Second
 	writeWait  = 3 * time.Second
-	pongWait   = 30 * time.Second
+	pongWait   = 3 * time.Second
 	PingPeriod = (pongWait * 8) / 10
 )
 
